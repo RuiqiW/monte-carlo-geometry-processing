@@ -29,30 +29,30 @@ void smooth(
 	// did you know that u * partial^2 u / partial x^2 is quadratic in u, as 
 	// u is linear in u, and partial^2 u / partial x^2 is linear in u, so the product is quadratic
 
-	MatrixXd l;
-	igl::edge_lengths(V, F, l);
+	//MatrixXd l;
+	//igl::edge_lengths(V, F, l);
 
-	DiagonalMatrix<double, Eigen::Dynamic> M_pre(V.rows());
-	massmatrix(l, F, M_pre);
+	//DiagonalMatrix<double, Eigen::Dynamic> M_pre(V.rows());
+	//massmatrix(l, F, M_pre);
 
-	VectorXd v = M_pre.diagonal();
-	
-	// Is there another way to use the DiagonalMatrix class, this seems clumsy. Can you subtract MatrixXd from DiagonalMatrix?
-	SparseMatrix<double> M(V.rows(), V.rows());
-	for (int i = 0; i < V.rows(); i++) {
-		M.insert(i, i) = v(i);
-	}
-	
-	SparseMatrix<double> L(V.rows(), V.rows());
+	//VectorXd v = M_pre.diagonal();
+	//
+	//// Is there another way to use the DiagonalMatrix class, this seems clumsy. Can you subtract MatrixXd from DiagonalMatrix?
+	//SparseMatrix<double> M(V.rows(), V.rows());
+	//for (int i = 0; i < V.rows(); i++) {
+	//	M.insert(i, i) = v(i);
+	//}
+	//
+	//SparseMatrix<double> L(V.rows(), V.rows());
 
-	cotmatrix(l, F, L);
+	//cotmatrix(l, F, L);
 
-	SimplicialLLT<SparseMatrix<double>> solver;
-	solver.compute(M - lambda * L);
+	//SimplicialLLT<SparseMatrix<double>> solver;
+	//solver.compute(M - lambda * L);
 
-	U = solver.solve(M * G);
-	// Why doesn't this work as well?
-	// MatrixXd I = MatrixXd::Identity(M.rows(), M.cols())
-	// A = solver.compute(I);
-	// U = A * M * G
+	//U = solver.solve(M * G);
+	//// Why doesn't this work as well?
+	//// MatrixXd I = MatrixXd::Identity(M.rows(), M.cols())
+	//// A = solver.compute(I);
+	//// U = A * M * G
 }
