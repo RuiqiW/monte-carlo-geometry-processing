@@ -7,6 +7,8 @@
 #include <string>
 #include <iostream>
 #include <walk_on_spheres.h>
+#include <fstream>
+using namespace std;
 using namespace Eigen;
 int main(int argc, char *argv[])
 {
@@ -33,11 +35,11 @@ F.row(4) = Vector3i(7, 6, 6);
 // not sure what to do for boundary conditions
 VectorXd B = V.col(1);
 
-int n = 5;
+int n = 25;
 MatrixXd P(n*n, 3);
 for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-        P.row(5 * i + j) = 1.0 / n * Vector3d(i, j, 0);
+        P.row(25 * i + j) = 1.0 / n * Vector3d(i, j, 0);
     }
 }
 VectorXd total_U = VectorXd::Zero(n*n);
@@ -52,7 +54,16 @@ for (int k = 0; k < NUM_ITERATIONS; k++) {
 total_U /= 5.0;
 
 std::cout << total_U << std::endl;
+ofstream out("out.csv");
 
+for (int i = 0; i < total_U.rows(); i++) {
+
+    //out << (int)i / 5 << ", " << i % 5 << ", " << total_U(i) << endl;
+
+    out << total_U(i) << endl;
+
+}
+ 
 return 0;
 //  // Load input meshes
 //  Eigen::MatrixXd OV,V,U;
