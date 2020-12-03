@@ -1,7 +1,9 @@
 #include "../include/walk_on_spheres.h"
 #include <igl/AABB.h>
 #include <random>
+#include <iostream>
 
+using namespace std;
 void walk_on_spheres(
   const Eigen::MatrixXd & V,
   const Eigen::MatrixXi & F,
@@ -9,76 +11,78 @@ void walk_on_spheres(
   const Eigen::MatrixXd & P,
   Eigen::VectorXd & U)
 {
-  //// TODO: take stoping tolerance as parameter
-  //  double eps = 10-2;
+  // TODO: take stoping tolerance as parameter
+    double eps = 10-2;
 
-  //  igl::AABB<Eigen::MatrixXd, 2> tree;
-  //  tree.init(V,F);
-  //  
-  //  Eigen::MatrixXd Q = P;
-  //  Eigen::VectorXd sqrD, I;
-  //  Eigen::MatrixXd C;
+    igl::AABB<Eigen::MatrixXd, 3> tree;
+    //tree.init(V,F);
+    
+    cout << P << endl;
 
-  //  int iter = 0;
+    Eigen::MatrixXd Q = P;
+    Eigen::VectorXd sqrD, I;
+    Eigen::MatrixXd C;
 
-  //  // TODO: check for sqrD and early terminate the loop
-  //  while(iter < 5){
-  //    iter++;
-  //    tree.squared_distance(V,F,Q,sqrD,I,C);
+    int iter = 0;
 
-  //    for(int i = 0; i < Q.rows(); i++){
-  //      // sample a point on B(x)
-  //      double radius = sqrt(sqrD(i));
-  //      Eigen::RowVector3d center = Q.row(i);
+    // TODO: check for sqrD and early terminate the loop
+    while(iter < 5){
+      iter++;
+      tree.squared_distance(V,F,Q,sqrD,I,C);
 
-  //      std::random_device rd;
-  //      std::mt19937 generator (rd());
-  //      std::uniform_real_distribution<double> uniform01(0.0, 1.0);
+      for(int i = 0; i < Q.rows(); i++){
+        // sample a point on B(x)
+        double radius = sqrt(sqrD(i));
+        Eigen::RowVector3d center = Q.row(i);
 
-  //      //double M_PI = 3.14;
-  //      double theta = 2 * 3.14 * uniform01(generator);
-  //      //double phi = M_PI * uniform01(generator);
-  //      //double x = sin(phi) * cos(theta);
-  //      //double y = sin(phi) * sin(theta);
-  //      //double z = cos(phi);
+        std::random_device rd;
+        std::mt19937 generator (rd());
+        std::uniform_real_distribution<double> uniform01(0.0, 1.0);
 
-  //      double x = cos(theta);
-  //      double y = sin(theta);
+        //double M_PI = 3.14;
+        double theta = 2 * 3.14 * uniform01(generator);
+        //double phi = M_PI * uniform01(generator);
+        //double x = sin(phi) * cos(theta);
+        //double y = sin(phi) * sin(theta);
+        //double z = cos(phi);
 
-  //      //Eigen::RowVector3d sample(x, y, z);
-  //      Eigen::RowVector3d sample(x, y, 0);
-  //      sample = sample * radius + center;
+        double x = cos(theta);
+        double y = sin(theta);
 
-  //      Q.row(i) = sample;
-  //    }
-  //  }
+        //Eigen::RowVector3d sample(x, y, z);
+        Eigen::RowVector3d sample(x, y, 0);
+        sample = sample * radius + center;
 
-  //  // get closest face
-  //  tree.squared_distance(V, F, Q, sqrD, I, C);
+        Q.row(i) = sample;
+      }
+    }
 
-  //  for(int i=0; i < P.rows(); i++){
+    // get closest face
+    tree.squared_distance(V, F, Q, sqrD, I, C);
 
-  //    // choose the closest vertex (TODO: maybe interpolate the values at the vertices of the closest face?)
-  //    Eigen::RowVector3i face = F.row(I(i));
-  //    int closest_idx = face(0);
-  //    double closest_dist = (V.row(face(0)) - P.row(i)).squaredNorm();
+    for(int i=0; i < P.rows(); i++){
 
-  //    double dist = (V.row(face(1)) - P.row(i)).squaredNorm();
-  //    if( dist < closest_dist){
-  //      closest_idx = face(1);
-  //      closest_dist = dist;
-  //    }
+      // choose the closest vertex (TODO: maybe interpolate the values at the vertices of the closest face?)
+      Eigen::RowVector3i face = F.row(I(i));
+      int closest_idx = face(0);
+      double closest_dist = (V.row(face(0)) - P.row(i)).squaredNorm();
 
-  //    dist = (V.row(face(2)) - P.row(i)).squaredNorm();
-  //     if( dist < closest_dist){
-  //      closest_idx = face(2);
-  //      closest_dist = dist;
-  //    }
+      double dist = (V.row(face(1)) - P.row(i)).squaredNorm();
+      if( dist < closest_dist){
+        closest_idx = face(1);
+        closest_dist = dist;
+      }
+
+      dist = (V.row(face(2)) - P.row(i)).squaredNorm();
+       if( dist < closest_dist){
+        closest_idx = face(2);
+        closest_dist = dist;
+      }
 
 
-  //    // get the boundary value
-  //    U(i) = B(closest_idx);
-  //  }
+      // get the boundary value
+      U(i) = B(closest_idx);
+    }
 
     
 }
