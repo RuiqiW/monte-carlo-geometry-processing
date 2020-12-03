@@ -10,7 +10,7 @@
 using namespace Eigen;
 int main(int argc, char *argv[])
 {
-    Matrix3d V(8, 3);
+    MatrixXd V(8, 3);
 
 V.row(0) = Vector3d(0.5, 0.1, 0);
 V.row(1) = Vector3d(0.9, 0.5, 0);
@@ -21,26 +21,26 @@ V.row(5) = Vector3d(0.5, 0.66666, 0);
 V.row(6) = Vector3d(0.33333, 0.5, 0);
 V.row(7) = Vector3d(0.666666, 0.5, 0);
 
-MatrixXi F(6, 2);
+MatrixXi F(5, 3);
 
-F.row(0) = Vector2i(0, 1);
-F.row(1) = Vector2i(2, 3);
-F.row(2) = Vector2i(3, 0);
-F.row(3) = Vector2i(4, 5);
-F.row(4) = Vector2i(7, 6);
+F.row(0) = Vector3i(0, 1, 1);
+F.row(1) = Vector3i(2, 3, 3);
+F.row(2) = Vector3i(3, 0, 0);
+F.row(3) = Vector3i(4, 5, 5);
+F.row(4) = Vector3i(7, 6, 6);
 
 
 // not sure what to do for boundary conditions
-VectorXd B = V.col(2);
+VectorXd B = V.col(1);
 
 int n = 5;
-MatrixXd P(n, 3);
+MatrixXd P(n*n, 3);
 for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
         P.row(5 * i + j) = 1.0 / n * Vector3d(i, j, 0);
     }
 }
-VectorXd total_U = VectorXd::Zero(n);
+VectorXd total_U = VectorXd::Zero(n*n);
 
 int NUM_ITERATIONS = 5;
 for (int k = 0; k < NUM_ITERATIONS; k++) {
@@ -49,7 +49,10 @@ for (int k = 0; k < NUM_ITERATIONS; k++) {
     total_U += U;
 }
 
-total_U /= NUM_ITERATIONS;
+total_U /= 5.0;
+
+std::cout << total_U << std::endl;
+
 return 0;
 //  // Load input meshes
 //  Eigen::MatrixXd OV,V,U;

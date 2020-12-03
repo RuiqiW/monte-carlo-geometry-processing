@@ -1,5 +1,6 @@
 #include "../include/walk_on_spheres.h"
 #include <igl/AABB.h>
+#include <igl/point_mesh_squared_distance.h>
 #include <random>
 #include <iostream>
 
@@ -15,19 +16,25 @@ void walk_on_spheres(
     double eps = 10-2;
 
     igl::AABB<Eigen::MatrixXd, 3> tree;
-    //tree.init(V,F);
-    
-    cout << P << endl;
+    tree.init(V,F);
 
-    Eigen::MatrixXd Q = P;
-    Eigen::VectorXd sqrD, I;
+    Eigen::MatrixXd Q;
+    Q.resizeLike(P);
+
+    Eigen::VectorXd sqrD;
+    Eigen::VectorXi I;
     Eigen::MatrixXd C;
 
     int iter = 0;
 
     // TODO: check for sqrD and early terminate the loop
+    for(int i=0; i < P.rows(); i++){
+      Q.row(i) = P.row(i);
+    }
+    
     while(iter < 5){
       iter++;
+      // igl::point_mesh_squared_distance(Q, V, F, sqrD, I, C);
       tree.squared_distance(V,F,Q,sqrD,I,C);
 
       for(int i = 0; i < Q.rows(); i++){
@@ -58,7 +65,11 @@ void walk_on_spheres(
     }
 
     // get closest face
-    tree.squared_distance(V, F, Q, sqrD, I, C);
+    // igl::point_mesh_squared_distance(Q, V, F, sqrD, I, C);
+    tree.squared_distance(V,F,Q,sqrD,I,C);
+
+
+     U.resize(P.rows());
 
     for(int i=0; i < P.rows(); i++){
 
@@ -73,15 +84,16 @@ void walk_on_spheres(
         closest_dist = dist;
       }
 
-      dist = (V.row(face(2)) - P.row(i)).squaredNorm();
-       if( dist < closest_dist){
-        closest_idx = face(2);
-        closest_dist = dist;
-      }
+      // dist = (V.row(face(2)) - P.row(i)).squaredNorm();
+      //  if( dist < closest_dist){
+      //   closest_idx = face(2);
+      //   closest_dist = dist;
+      // }
 
 
       // get the boundary value
       U(i) = B(closest_idx);
+      // std::cout << closest_dist << " " << closest_idx << " " << U(i) << std::endl;
     }
 
     
