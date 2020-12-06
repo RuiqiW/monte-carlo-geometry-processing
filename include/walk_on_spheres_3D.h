@@ -8,7 +8,7 @@
 // Inputs:
 //   V  #V by 3 list of surface mesh vertex positions
 //   F  #F by 3 list of triangles 
-//   B  #V by 1 list of Dirichlet boundary conditions
+//   B  boundary condition function of the form B:R^2 -> R
 //   P  #P by 3 list of query positions
 // Outputs:
 //   U  #P by 1 list of values at query positions
