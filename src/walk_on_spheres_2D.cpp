@@ -3,8 +3,8 @@
 #include <igl/point_mesh_squared_distance.h>
 #include <random>
 #include <iostream>
-
 using namespace std;
+using namespace Eigen;
 void walk_on_spheres_2D(
 	const Eigen::MatrixXd& V,
 	const Eigen::MatrixXi& F,
@@ -32,14 +32,15 @@ void walk_on_spheres_2D(
 		Q.row(i) = P.row(i);
 	}
 	vector<int> terminated = vector<int>();
+
 	while (iter < 100) {
 		iter++;
-		// igl::point_mesh_squared_distance(Q, V, F, sqrD, I, C);
+		
 		tree.squared_distance(V, F, Q, sqrD, I, C);
 
 		for (int i = 0; i < Q.rows(); i++) {
 			// iterator == terminated.end() means i not in terminated 
-			if ((find(terminated.begin(), terminated.end(), i) == terminated.end())) {
+			//if ((find(terminated.begin(), terminated.end(), i) == terminated.end())) {
 
 				// sample a point on B(x)
 				double radius = sqrt(sqrD(i));
@@ -57,15 +58,15 @@ void walk_on_spheres_2D(
 				Eigen::RowVector3d sample(x, y, 0);
 				sample = sample * radius + center;
 				Q.row(i) = sample;
-				if (sqrD(i) < eps) {
-					terminated.push_back(i);
-					Q.row(i) = C.row(i);
-				}
+				//if (sqrD(i) < eps) {
+				//	terminated.push_back(i);
+				//	Q.row(i) = C.row(i);
+				//}
 			}
-		}
+		//}
 	}
 
-	// get closest face
+	// get closest face (for the query points that did not come within eps of the boundary)
 	tree.squared_distance(V, F, Q, sqrD, I, C);
 
 	U.resize(P.rows());

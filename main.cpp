@@ -23,6 +23,8 @@
 #include <igl/get_seconds.h>
 #include <cstdlib>
 #include "2D_example_runner.h"
+#include "poisson_2D_runner.h"
+#include "walk_on_spheres_poisson.h"
 
 
 using namespace std;
@@ -32,9 +34,17 @@ using namespace Eigen;
 double boundary_3D(Vector3d boundary_point) {
     return boundary_point.norm();
 }
+//double source(Vector3d point) {
+double source(Vector3d point) {
+    double c = 10.0;
+    Eigen::Vector3d sourcePoint(0.5, 0.5, 0.5);
+    double r2 = (point - sourcePoint).squaredNorm();
+    return c * std::pow(exp(1.0), -r2);
+}
 
 
-int example_for_3D(int argc, char* argv[]) {
+int example_for_3D(int argc, char* argv[], int pde=0) {
+
     const auto time = [](std::function<void(void)> func)->double
     {
         const double t_before = igl::get_seconds();
@@ -47,7 +57,8 @@ int example_for_3D(int argc, char* argv[]) {
     // Read Mesh
     Eigen::MatrixXd V;
     Eigen::MatrixXi F;
-    igl::read_triangle_mesh(argc > 1 ? argv[1] : "../data/bunny.off", V, F);
+    //igl::read_triangle_mesh(argc > 1 ? argv[1] : "../data/bunny.off", V, F);
+    igl::read_triangle_mesh(argc > 1 ? argv[1] : "../data/cactus.obj", V, F);
 
 
     // Sample points inside mesh: https://github.com/libigl/libigl/blob/master/tutorial/717_FastWindingNumber
@@ -168,7 +179,17 @@ int example_for_3D(int argc, char* argv[]) {
             #pragma omp parallel for
             for (int k = 0; k < NUM_ITERATIONS; k++) {
                 VectorXd U;
-                walk_on_spheres_3D(V, F, boundary_3D, QiV, U);
+
+                // laplacian
+                if (pde == 0) {
+                    walk_on_spheres_3D(V, F, boundary_3D, QiV, U);
+                }
+                else if (pde == 1) {
+
+                    Eigen::RowVector3d sourcePoint(0.5, 0.5, 0.5);
+                    walk_on_spheres_poisson(V, F, boundary_3D, source, QiV, U);
+                }
+
                 total_U += U;
             }
 
@@ -229,9 +250,10 @@ FastWindingNumber
 
 int main(int argc, char* argv[])
 {
+    //poisson_2D_runner();
 
-	example_for_2D();
-
-    //example_for_3D(argc, argv);
+	//example_for_2D();
+    // 0 for laplcian, 1 for poission
+    example_for_3D(argc, argv, 0);
 
 }

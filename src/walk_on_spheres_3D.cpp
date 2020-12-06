@@ -82,24 +82,6 @@ void walk_on_spheres_3D(
 
 		// U(i) = ((int)floor(6 * C(i, 0)) + (int) floor(6 * C(i, 1))) % 2;
 		U(i) = C.row(i).norm();
-
-		//// choose the closest vertex (TODO: maybe interpolate the values at the vertices of the closest face?)
-		//Eigen::RowVector3i face = F.row(I(i));
-		//int closest_idx = face(0);
-		//double closest_dist = (V.row(face(0)) - P.row(i)).squaredNorm();
-		//double dist = (V.row(face(1)) - P.row(i)).squaredNorm();
-		//if (dist < closest_dist) {
-		//	closest_idx = face(1);
-		//	closest_dist = dist;
-		//}
-		//// dist = (V.row(face(2)) - P.row(i)).squaredNorm();
-		////  if( dist < closest_dist){
-		////   closest_idx = face(2);
-		////   closest_dist = dist;
-		//// }
-		//// get the boundary value
-		//U(i) = B(closest_idx);
-		//// std::cout << closest_dist << " " << closest_idx << " " << U(i) << std::endl;
 	}
 
 
