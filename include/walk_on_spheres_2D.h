@@ -12,11 +12,12 @@
 //   P  #P by 3 list of query positions
 // Outputs:
 //   U  #P by 1 list of values at query positions
-void walk_on_spheres(
-  const Eigen::MatrixXd & V,
-  const Eigen::MatrixXi & F,
-  const Eigen::VectorXd & B,
-  const Eigen::MatrixXd & P,
+
+void walk_on_spheres_2D(
+	const Eigen::MatrixXd& V,
+	const Eigen::MatrixXi& F,
+	double (*B)(Eigen::Vector2d),
+    const Eigen::MatrixXd & P,
   Eigen::VectorXd & U);
 
 
