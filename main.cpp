@@ -114,7 +114,8 @@ int main(int argc, char* argv[])
     }
 
     // Generate a list of random query points in the bounding box
-    Eigen::MatrixXd Q = Eigen::MatrixXd::Random(10000, 3);
+    Eigen::MatrixXd Q = Eigen::MatrixXd::Random(1000, 3);
+    //Eigen::MatrixXd Q = Eigen::MatrixXd::Random(10000, 3);
     const Eigen::RowVector3d Vmin = V.colwise().minCoeff();
     const Eigen::RowVector3d Vmax = V.colwise().maxCoeff();
     const Eigen::RowVector3d Vdiag = Vmax - Vmin;
@@ -135,7 +136,7 @@ int main(int argc, char* argv[])
             F.rows(),
             time([&]() {igl::fast_winding_number(V.cast<float>().eval(), F, 2, fwn_bvh); }));
         Eigen::VectorXf WiV;
-        printf("      triangle soup evaluation  (% 8ld queries):   %g secs\n",
+        printf("triangle soup evaluation  (% 8ld queries):   %g secs\n",
             Q.rows(),
             time([&]() {igl::fast_winding_number(fwn_bvh, 2, Q.cast<float>().eval(), WiV); }));
         igl::slice_mask(Q, WiV.array() > 0.5, 1, QiV);
@@ -168,8 +169,8 @@ int main(int argc, char* argv[])
     viewer.data_list[object_data].set_mesh(V, F);
     viewer.data_list[object_data].point_size = 5;
 
-
     int NUM_ITERATIONS = 64;
+    /*int NUM_ITERATIONS = 64;
     VectorXd total_U_laplacian = VectorXd::Zero(QiV.rows());
     VectorXd total_U_poisson_without_importance = VectorXd::Zero(QiV.rows());
     VectorXd total_U_poisson_with_importance = VectorXd::Zero(QiV.rows());
@@ -179,16 +180,16 @@ int main(int argc, char* argv[])
         walk_on_spheres_3D(V, F, laplacian_boundary_3D, QiV, U);
         total_U_laplacian += U;
 
-        walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 1, false);
+        walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 10000, false);
         total_U_poisson_without_importance += U;
 
-        walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 1, false);
+        walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 10000, true);
         total_U_poisson_with_importance += U;
     }
-
     VectorXd average_U_laplacian = total_U_laplacian / NUM_ITERATIONS;
     VectorXd average_U_poisson_without_importance = total_U_poisson_without_importance / NUM_ITERATIONS;
-    VectorXd average_U_poisson_with_importance = total_U_poisson_with_importance / NUM_ITERATIONS;
+    VectorXd average_U_poisson_with_importance = total_U_poisson_with_importance / NUM_ITERATIONS;*/
+
 
 
     const auto update = [&]()
@@ -203,27 +204,14 @@ int main(int argc, char* argv[])
         case 3:
             // show all Q inside
         {
-            //int NUM_ITERATIONS = 64;
-            //VectorXd total_U = VectorXd::Zero(QiV.rows());
-            //for (int k = 0; k < NUM_ITERATIONS; k++) {
-            //    VectorXd U;
-
-            //    // laplacian
-            //    walk_on_spheres_3D(V, F, laplacian_boundary_3D, QiV, U);
-            //    //if (pde == 0) {
-            //    //    walk_on_spheres_3D(V, F, laplacian_boundary_3D, QiV, U);
-            //    //}
-            //    //else if (pde == 1) {
-
-            //    //    walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5));
-            //    //}
-
-            //    total_U += U;
-            //}
-
-            //total_U /= 64.0;
+            VectorXd total_U_laplacian = VectorXd::Zero(QiV.rows());
+            for (int k = 0; k < NUM_ITERATIONS; k++) {
+                VectorXd U;
+                walk_on_spheres_3D(V, F, laplacian_boundary_3D, QiV, U);
+                total_U_laplacian += U;
+            }
+            VectorXd average_U_laplacian = total_U_laplacian / NUM_ITERATIONS;
             Eigen::MatrixXd CM;
-            //igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, total_U, total_U.minCoeff(), total_U.maxCoeff(), CM);
             igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, average_U_laplacian, average_U_laplacian.minCoeff(), average_U_laplacian.maxCoeff(), CM);
             viewer.data_list[query_data].set_points(QiV, CM);
             break;
@@ -231,36 +219,29 @@ int main(int argc, char* argv[])
         case 4:
         {
             // Poisson without importance sampling
-            /*int NUM_ITERATIONS = 64;
-            VectorXd total_U = VectorXd::Zero(QiV.rows());
+
+            VectorXd total_U_poisson_without_importance = VectorXd::Zero(QiV.rows());
             for (int k = 0; k < NUM_ITERATIONS; k++) {
                 VectorXd U;
-
-                walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 1, false);
-
-                total_U += U;
-            }*/
-
-            //total_U /= 64.0;
+                walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 10000, false);
+                total_U_poisson_without_importance += U;
+            }
+            VectorXd average_U_poisson_without_importance = total_U_poisson_without_importance / NUM_ITERATIONS;
             Eigen::MatrixXd CM;
             igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, average_U_poisson_without_importance, average_U_poisson_without_importance.minCoeff(), average_U_poisson_without_importance.maxCoeff(), CM);
-            //igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, total_U, total_U.minCoeff(), total_U.maxCoeff(), CM);
             viewer.data_list[query_data].set_points(QiV, CM);
             break;
         }
         case 5:
         {
-            // Poisson with importance sampling
-            /*int NUM_ITERATIONS = 64;
-            VectorXd total_U = VectorXd::Zero(QiV.rows());
+            VectorXd total_U_poisson_with_importance = VectorXd::Zero(QiV.rows());
             for (int k = 0; k < NUM_ITERATIONS; k++) {
                 VectorXd U;
-                walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5));
-                total_U += U;
+                walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 10000, true);
+                total_U_poisson_with_importance += U;
             }
-            total_U /= 64.0;*/
+            VectorXd average_U_poisson_with_importance = total_U_poisson_with_importance / NUM_ITERATIONS;
             Eigen::MatrixXd CM;
-            //igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, total_U, total_U.minCoeff(), total_U.maxCoeff(), CM);
             igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, average_U_poisson_with_importance, average_U_poisson_with_importance.minCoeff(), average_U_poisson_with_importance.maxCoeff(), CM);
             viewer.data_list[query_data].set_points(QiV, CM);
             break;
