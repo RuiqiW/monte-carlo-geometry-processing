@@ -8,7 +8,7 @@ using namespace std;
 void walk_on_spheres_poisson(
 	const Eigen::MatrixXd& V,
 	const Eigen::MatrixXi& F,
-	double (*B)(Eigen::Vector3d, Eigen::Vector3d),
+	double (*B)(Eigen::Vector3d),
 	double (*f)(Eigen::Vector3d),
 	const Eigen::MatrixXd& P,
 	Eigen::VectorXd& U,
@@ -141,7 +141,7 @@ void walk_on_spheres_poisson(
 
 	for (int i = 0; i < P.rows(); i++) {
 
-		U(i) += B(C.row(i), sourcePoint);
+		U(i) += B(C.row(i));
 		 //U(i) += 1.0 / (C.row(i) - sourcePoint).norm();
 		// U(i) += 1.0 / C.row(i).norm();
 	}

@@ -31,10 +31,12 @@ using namespace std;
 using namespace Eigen;
 
 
+Vector3d sourcePoint;
+
 double laplacian_boundary_3D(Vector3d boundary_point) {
     return boundary_point.norm();
 }
-double poisson_boundary_3D(Vector3d boundary_point, Vector3d sourcePoint) {
+double poisson_boundary_3D(Vector3d boundary_point) {
     return 1/ ((boundary_point - sourcePoint).norm());
 }
 double source(Vector3d point) {
@@ -44,9 +46,8 @@ double source(Vector3d point) {
     return c * std::pow(exp(1.0), -r2);
 }
 
-
-int example_for_3D(int argc, char* argv[], int pde=0) {
-
+int main(int argc, char* argv[])
+{
     const auto time = [](std::function<void(void)> func)->double
     {
         const double t_before = igl::get_seconds();
@@ -61,7 +62,6 @@ int example_for_3D(int argc, char* argv[], int pde=0) {
     Eigen::MatrixXi F;
     //igl::read_triangle_mesh(argc > 1 ? argv[1] : "../data/bunny.off", V, F);
     igl::read_triangle_mesh(argc > 1 ? argv[1] : "../data/cactus.obj", V, F);
-
 
     // Sample points inside mesh: https://github.com/libigl/libigl/blob/master/tutorial/717_FastWindingNumber
 
@@ -118,6 +118,10 @@ int example_for_3D(int argc, char* argv[], int pde=0) {
     const Eigen::RowVector3d Vmin = V.colwise().minCoeff();
     const Eigen::RowVector3d Vmax = V.colwise().maxCoeff();
     const Eigen::RowVector3d Vdiag = Vmax - Vmin;
+
+    sourcePoint = 0.5 * (Vmax + Vmin);
+
+
     for (int q = 0; q < Q.rows(); q++)
     {
         Q.row(q) = (Q.row(q).array() * 0.5 + 0.5) * Vdiag.array() + Vmin.array();
@@ -127,7 +131,7 @@ int example_for_3D(int argc, char* argv[], int pde=0) {
     Eigen::MatrixXd QiV;
     {
         igl::FastWindingNumberBVH fwn_bvh;
-        printf("triangle soup precomputation    (% 8ld triangles): %g secs\n",
+        printf("triangle soup precomputation (% 8ld triangles): %g secs\n",
             F.rows(),
             time([&]() {igl::fast_winding_number(V.cast<float>().eval(), F, 2, fwn_bvh); }));
         Eigen::VectorXf WiV;
@@ -164,46 +168,104 @@ int example_for_3D(int argc, char* argv[], int pde=0) {
     viewer.data_list[object_data].set_mesh(V, F);
     viewer.data_list[object_data].point_size = 5;
 
+
+    int NUM_ITERATIONS = 64;
+    VectorXd total_U_laplacian = VectorXd::Zero(QiV.rows());
+    VectorXd total_U_poisson_without_importance = VectorXd::Zero(QiV.rows());
+    VectorXd total_U_poisson_with_importance = VectorXd::Zero(QiV.rows());
+
+    for (int k = 0; k < NUM_ITERATIONS; k++) {
+        VectorXd U;
+        walk_on_spheres_3D(V, F, laplacian_boundary_3D, QiV, U);
+        total_U_laplacian += U;
+
+        walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 1, false);
+        total_U_poisson_without_importance += U;
+
+        walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 1, false);
+        total_U_poisson_with_importance += U;
+    }
+
+    VectorXd average_U_laplacian = total_U_laplacian / NUM_ITERATIONS;
+    VectorXd average_U_poisson_without_importance = total_U_poisson_without_importance / NUM_ITERATIONS;
+    VectorXd average_U_poisson_with_importance = total_U_poisson_with_importance / NUM_ITERATIONS;
+
+
     const auto update = [&]()
     {
         viewer.data_list[query_data].clear();
         switch (show_Q)
         {
-        case 1:
+        case 2:
             // show all Q
             viewer.data_list[query_data].set_points(Q, Eigen::RowVector3d(0.996078, 0.760784, 0.760784));
             break;
-        case 2:
+        case 3:
             // show all Q inside
         {
-            int NUM_ITERATIONS = 64;
-            VectorXd total_U = VectorXd::Zero(QiV.rows());
-            #pragma omp parallel for
-            for (int k = 0; k < NUM_ITERATIONS; k++) {
-                VectorXd U;
+            //int NUM_ITERATIONS = 64;
+            //VectorXd total_U = VectorXd::Zero(QiV.rows());
+            //for (int k = 0; k < NUM_ITERATIONS; k++) {
+            //    VectorXd U;
 
-                // laplacian
-                if (pde == 0) {
-                    walk_on_spheres_3D(V, F, laplacian_boundary_3D, QiV, U);
-                }
-                else if (pde == 1) {
+            //    // laplacian
+            //    walk_on_spheres_3D(V, F, laplacian_boundary_3D, QiV, U);
+            //    //if (pde == 0) {
+            //    //    walk_on_spheres_3D(V, F, laplacian_boundary_3D, QiV, U);
+            //    //}
+            //    //else if (pde == 1) {
 
-                    walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5));
-                }
+            //    //    walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5));
+            //    //}
 
-                total_U += U;
-            }
+            //    total_U += U;
+            //}
 
-            total_U /= 64.0;
+            //total_U /= 64.0;
             Eigen::MatrixXd CM;
-            igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, total_U, total_U.minCoeff(), total_U.maxCoeff(), CM);
+            //igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, total_U, total_U.minCoeff(), total_U.maxCoeff(), CM);
+            igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, average_U_laplacian, average_U_laplacian.minCoeff(), average_U_laplacian.maxCoeff(), CM);
             viewer.data_list[query_data].set_points(QiV, CM);
             break;
         }
-        // viewer.data_list[query_data].set_points(QiV,Eigen::RowVector3d(0.564706,0.847059,0.768627));
-        // break;
-        }
+        case 4:
+        {
+            // Poisson without importance sampling
+            /*int NUM_ITERATIONS = 64;
+            VectorXd total_U = VectorXd::Zero(QiV.rows());
+            for (int k = 0; k < NUM_ITERATIONS; k++) {
+                VectorXd U;
 
+                walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 1, false);
+
+                total_U += U;
+            }*/
+
+            //total_U /= 64.0;
+            Eigen::MatrixXd CM;
+            igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, average_U_poisson_without_importance, average_U_poisson_without_importance.minCoeff(), average_U_poisson_without_importance.maxCoeff(), CM);
+            //igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, total_U, total_U.minCoeff(), total_U.maxCoeff(), CM);
+            viewer.data_list[query_data].set_points(QiV, CM);
+            break;
+        }
+        case 5:
+        {
+            // Poisson with importance sampling
+            /*int NUM_ITERATIONS = 64;
+            VectorXd total_U = VectorXd::Zero(QiV.rows());
+            for (int k = 0; k < NUM_ITERATIONS; k++) {
+                VectorXd U;
+                walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5));
+                total_U += U;
+            }
+            total_U /= 64.0;*/
+            Eigen::MatrixXd CM;
+            //igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, total_U, total_U.minCoeff(), total_U.maxCoeff(), CM);
+            igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, average_U_poisson_with_importance, average_U_poisson_with_importance.minCoeff(), average_U_poisson_with_importance.maxCoeff(), CM);
+            viewer.data_list[query_data].set_points(QiV, CM);
+            break;
+        }
+        }
         viewer.data_list[object_data].clear();
         if (show_P)
         {
@@ -216,8 +278,6 @@ int example_for_3D(int argc, char* argv[], int pde=0) {
         }
     };
 
-
-
     viewer.callback_key_pressed =
         [&](igl::opengl::glfw::Viewer&, unsigned int key, int mod)
     {
@@ -229,7 +289,20 @@ int example_for_3D(int argc, char* argv[], int pde=0) {
             show_P = !show_P;
             break;
         case '2':
-            show_Q = (show_Q + 1) % 3;
+            //show_Q = (show_Q + 1) % 3
+            show_Q = 2;
+            break;
+        case '3':
+            //show_Q = (show_Q + 1) % 3;
+            show_Q = 3;
+            break;
+        case '4':
+            //show_Q = (show_Q + 1) % 3;
+            show_Q = 4;
+            break;
+        case '5':
+            //show_Q = (show_Q + 1) % 3;
+            show_Q = 5;
             break;
         }
         update();
@@ -245,16 +318,4 @@ FastWindingNumber
 
     update();
     viewer.launch();
-}
-
-
-
-int main(int argc, char* argv[])
-{
-    //poisson_2D_runner();
-
-	//example_for_2D();
-    // 0 for laplcian, 1 for poission
-    example_for_3D(argc, argv, 1);
-
 }

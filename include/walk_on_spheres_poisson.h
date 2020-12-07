@@ -17,7 +17,7 @@
 void walk_on_spheres_poisson(
 	const Eigen::MatrixXd& V,
 	const Eigen::MatrixXi& F,
-	double (*B)(Eigen::Vector3d, Eigen::Vector3d),
+	double (*B)(Eigen::Vector3d),
 	double (*f)(Eigen::Vector3d),
 	const Eigen::MatrixXd& P,
 	Eigen::VectorXd& U,
