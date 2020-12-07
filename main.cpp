@@ -31,12 +31,14 @@ using namespace std;
 using namespace Eigen;
 
 
-double boundary_3D(Vector3d boundary_point) {
+double laplacian_boundary_3D(Vector3d boundary_point) {
     return boundary_point.norm();
 }
-//double source(Vector3d point) {
+double poisson_boundary_3D(Vector3d boundary_point, Vector3d sourcePoint) {
+    return 1/ ((boundary_point - sourcePoint).norm());
+}
 double source(Vector3d point) {
-    double c = 10.0;
+    double c = 10000.0;
     Eigen::Vector3d sourcePoint(0.5, 0.5, 0.5);
     double r2 = (point - sourcePoint).squaredNorm();
     return c * std::pow(exp(1.0), -r2);
@@ -182,12 +184,11 @@ int example_for_3D(int argc, char* argv[], int pde=0) {
 
                 // laplacian
                 if (pde == 0) {
-                    walk_on_spheres_3D(V, F, boundary_3D, QiV, U);
+                    walk_on_spheres_3D(V, F, laplacian_boundary_3D, QiV, U);
                 }
                 else if (pde == 1) {
 
-                    Eigen::RowVector3d sourcePoint(0.5, 0.5, 0.5);
-                    walk_on_spheres_poisson(V, F, boundary_3D, source, QiV, U);
+                    walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5));
                 }
 
                 total_U += U;
@@ -254,6 +255,6 @@ int main(int argc, char* argv[])
 
 	//example_for_2D();
     // 0 for laplcian, 1 for poission
-    example_for_3D(argc, argv, 0);
+    example_for_3D(argc, argv, 1);
 
 }

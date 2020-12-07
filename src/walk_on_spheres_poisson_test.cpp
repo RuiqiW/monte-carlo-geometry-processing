@@ -12,9 +12,9 @@ void walk_on_spheres_poisson(
 	double (*f)(Eigen::Vector3d),
 	const Eigen::MatrixXd& P,
 	Eigen::VectorXd& U,
-	const Eigen::RowVector3d sourcePoint,
-	const double c,
-	const bool use_importance
+	const Eigen::RowVector3d sourcePoint2,
+	const double c2,
+	const bool use_importance2
 	)
 {
 	// TODO: parameters
@@ -97,12 +97,12 @@ void walk_on_spheres_poisson(
                 		Eigen::RowVector3d sample_y(xx, yy, zz);
                 		sample_y = sample_y * k * radius + center;
 
-						//double r2 = (sample_y - sourcePoint).squaredNorm();
+						double r2 = (sample_y - sourcePoint).squaredNorm();
 
-						//fy = c * std::pow(exp(1.0), -r2);
-      //          		U(i) += volume * fy * (1-k) / k;
-						double volume = 1.0 / 3.0 * radius * radius; //  4 * pi *radius canceled by G(x, y)
-						U(i) += volume * f(sample_y.transpose()) * (1 - k) / k;
+						fy = c * std::pow(exp(1.0), -r2);
+                		U(i) += volume * fy * (1-k) / k;
+						//double volume = 1.0 / 3.0 * radius * radius; //  4 * pi *radius canceled by G(x, y)
+						//U(i) += volume * f(sample_y.transpose()) * (1 - k) / k;
 					}
 				}else{
                 	// r/R
@@ -117,14 +117,14 @@ void walk_on_spheres_poisson(
                 	sample_y = sample_y * k * radius + center;
                 
 					// double fy = 1;
-					//double r2 = (sample_y - sourcePoint).squaredNorm();
-					//double fy = c * std::pow(exp(1.0), -r2);
+					double r2 = (sample_y - sourcePoint).squaredNorm();
+					double fy = c * std::pow(exp(1.0), -r2);
 
-					//double volume = 1.0/3.0 * radius * radius; //  4 * pi *radius canceled by G(x, y)
-     //           	// (R-r)/rR = (1-k)R/kRR = (1-k)/(k * radius)
-     //           	U(i) += volume * fy * (1-k) / k;
-					double volume = 1.0 / 3.0 * radius * radius; //  4 * pi *radius canceled by G(x, y)
-					U(i) += volume * f(sample_y) * (1 - k) / k;
+					double volume = 1.0/3.0 * radius * radius; //  4 * pi *radius canceled by G(x, y)
+                	// (R-r)/rR = (1-k)R/kRR = (1-k)/(k * radius)
+                	U(i) += volume * fy * (1-k) / k;
+					//double volume = 1.0 / 3.0 * radius * radius; //  4 * pi *radius canceled by G(x, y)
+					//U(i) += volume * f(sample_y) * (1 - k) / k;
 				}
 				// if (sqrD(i) < eps) {
 				// 	terminated.push_back(i);
@@ -141,8 +141,8 @@ void walk_on_spheres_poisson(
 
 	for (int i = 0; i < P.rows(); i++) {
 
-		U(i) += B(C.row(i), sourcePoint);
-		 //U(i) += 1.0 / (C.row(i) - sourcePoint).norm();
+		//U(i) += B(C.row(i), sourcePoint);
+		 U(i) += 1.0 / (C.row(i) - sourcePoint).norm();
 		// U(i) += 1.0 / C.row(i).norm();
 	}
 
