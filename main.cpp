@@ -223,7 +223,6 @@ int main(int argc, char* argv[])
         case 4:
         {
             // Poisson without importance sampling
-
             VectorXd total_U_poisson_without_importance = VectorXd::Zero(QiV.rows());
             for (int k = 0; k < NUM_ITERATIONS; k++) {
                 VectorXd U;
@@ -238,7 +237,8 @@ int main(int argc, char* argv[])
         }
         case 5:
         {
-            cout << "test" << endl;
+            //cout << "test" << endl;
+            // Poisson with importance sampling
             VectorXd total_U_poisson_with_importance = VectorXd::Zero(QiV.rows());
             for (int k = 0; k < NUM_ITERATIONS; k++) {
                 VectorXd U;
