@@ -1,11 +1,11 @@
-#include "../include/walk_on_spheres_poisson.h"
+#include "../include/walk_on_spheres_screened_poisson.h"
 #include <igl/AABB.h>
 #include <igl/point_mesh_squared_distance.h>
 #include <random>
 #include <iostream>
 
 using namespace std;
-void walk_on_spheres_poisson(
+void walk_on_spheres_screened_poisson(
 	const Eigen::MatrixXd& V,
 	const Eigen::MatrixXi& F,
 	double (*B)(Eigen::Vector3d),
@@ -19,11 +19,6 @@ void walk_on_spheres_poisson(
 {
 	// TODO: parameters
 	double eps = 0.01;
-	//bool use_importance = true;
-	//double c = 10000.0;
-	// Eigen::RowVector3d sourcePoint(-0.02, 0.09, -0.002);
-	//Eigen::RowVector3d sourcePoint(0.5, 0.5, 0.5);
-	//c = 10000.0;
 
 	igl::AABB<Eigen::MatrixXd, 3> tree;
 	tree.init(V, F);
@@ -82,7 +77,8 @@ void walk_on_spheres_poisson(
 					double dist = (sourcePoint - center).norm();
 					if(dist < radius){
 						k = dist/radius;
-						U(i) += volume * fy * (1-k) / k;
+						double greens = std::sinh((1 - k) * radius * std::sqrt(c)) / (k * std::sinh(radius * std::sqrt(c)));
+						U(i) += volume * fy * greens;
 
 					// not inside B(x)
 					}else{
@@ -102,7 +98,8 @@ void walk_on_spheres_poisson(
 						//fy = c * std::pow(exp(1.0), -r2);
       //          		U(i) += volume * fy * (1-k) / k;
 						double volume = 1.0 / 3.0 * radius * radius; //  4 * pi *radius canceled by G(x, y)
-						U(i) += volume * f(sample_y.transpose()) * (1 - k) / k;
+						double greens = std::sinh((1 - k) * radius * std::sqrt(c)) / (k * std::sinh(radius * std::sqrt(c)));
+						U(i) += volume * f(sample_y.transpose()) * greens;
 					}
 				}else{
                 	// r/R
@@ -124,7 +121,9 @@ void walk_on_spheres_poisson(
      //           	// (R-r)/rR = (1-k)R/kRR = (1-k)/(k * radius)
      //           	U(i) += volume * fy * (1-k) / k;
 					double volume = 1.0 / 3.0 * radius * radius; //  4 * pi *radius canceled by G(x, y)
-					U(i) += volume * f(sample_y) * (1 - k) / k;
+					// U(i) += volume * f(sample_y) * (1 - k) / k;
+					double greens = std::sinh((1 - k) * radius * std::sqrt(c)) / (k * std::sinh(radius * std::sqrt(c)));
+					U(i) += volume * f(sample_y.transpose()) * greens;
 				}
 				// if (sqrD(i) < eps) {
 				// 	terminated.push_back(i);

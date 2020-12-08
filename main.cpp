@@ -25,6 +25,7 @@
 #include "2D_example_runner.h"
 #include "poisson_2D_runner.h"
 #include "walk_on_spheres_poisson.h"
+#include "walk_on_spheres_screened_poisson.h"
 
 
 using namespace std;
@@ -246,6 +247,21 @@ int main(int argc, char* argv[])
             viewer.data_list[query_data].set_points(QiV, CM);
             break;
         }
+        case 6:
+        {
+            VectorXd total_U_poisson_without_importance = VectorXd::Zero(QiV.rows());
+            for (int k = 0; k < NUM_ITERATIONS; k++) {
+                VectorXd U;
+                walk_on_spheres_screened_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 10000, false);
+                total_U_poisson_without_importance += U;
+            }
+            VectorXd average_U_poisson_without_importance = total_U_poisson_without_importance / NUM_ITERATIONS;
+            Eigen::MatrixXd CM;
+            igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, average_U_poisson_without_importance, average_U_poisson_without_importance.minCoeff(), average_U_poisson_without_importance.maxCoeff(), CM);
+            viewer.data_list[query_data].set_points(QiV, CM);
+            break;
+
+        }
         }
         viewer.data_list[object_data].clear();
         if (show_P)
@@ -285,6 +301,8 @@ int main(int argc, char* argv[])
             //show_Q = (show_Q + 1) % 3;
             show_Q = 5;
             break;
+        case '6':
+            show_Q = 6;
         }
         update();
         return true;
