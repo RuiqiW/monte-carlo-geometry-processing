@@ -26,11 +26,14 @@
 #include "poisson_2D_runner.h"
 #include "walk_on_spheres_poisson.h"
 #include "walk_on_spheres_screened_poisson.h"
+#include "walk_on_spheres_biharmonic.h"
 
 
 using namespace std;
 using namespace Eigen;
 
+double c = 10000.0;
+//int n 
 
 Vector3d sourcePoint;
 
@@ -41,7 +44,7 @@ double poisson_boundary_3D(Vector3d boundary_point) {
     return 1/ ((boundary_point - sourcePoint).norm());
 }
 double source(Vector3d point) {
-    double c = 10000.0;
+
     Eigen::Vector3d sourcePoint(0.5, 0.5, 0.5);
     double r2 = (point - sourcePoint).squaredNorm();
     return c * std::pow(exp(1.0), -r2);
@@ -224,7 +227,7 @@ int main(int argc, char* argv[])
             VectorXd total_U_poisson_without_importance = VectorXd::Zero(QiV.rows());
             for (int k = 0; k < NUM_ITERATIONS; k++) {
                 VectorXd U;
-                walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 10000, false);
+                walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, sourcePoint, c, false);
                 total_U_poisson_without_importance += U;
             }
             VectorXd average_U_poisson_without_importance = total_U_poisson_without_importance / NUM_ITERATIONS;
@@ -235,10 +238,11 @@ int main(int argc, char* argv[])
         }
         case 5:
         {
+            cout << "test" << endl;
             VectorXd total_U_poisson_with_importance = VectorXd::Zero(QiV.rows());
             for (int k = 0; k < NUM_ITERATIONS; k++) {
                 VectorXd U;
-                walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 10000, true);
+                walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, sourcePoint, c, true);
                 total_U_poisson_with_importance += U;
             }
             VectorXd average_U_poisson_with_importance = total_U_poisson_with_importance / NUM_ITERATIONS;
@@ -249,15 +253,48 @@ int main(int argc, char* argv[])
         }
         case 6:
         {
-            VectorXd total_U_poisson_without_importance = VectorXd::Zero(QiV.rows());
+            // Screened poisson without importance
+            VectorXd total_U_screened_poisson_without_importance = VectorXd::Zero(QiV.rows());
             for (int k = 0; k < NUM_ITERATIONS; k++) {
                 VectorXd U;
-                walk_on_spheres_screened_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 10000, false);
-                total_U_poisson_without_importance += U;
+                walk_on_spheres_screened_poisson(V, F, poisson_boundary_3D, source, QiV, U, sourcePoint, c, false);
+                total_U_screened_poisson_without_importance += U;
             }
-            VectorXd average_U_poisson_without_importance = total_U_poisson_without_importance / NUM_ITERATIONS;
+            VectorXd average_U_screened_poisson_without_importance = total_U_screened_poisson_without_importance / NUM_ITERATIONS;
             Eigen::MatrixXd CM;
-            igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, average_U_poisson_without_importance, average_U_poisson_without_importance.minCoeff(), average_U_poisson_without_importance.maxCoeff(), CM);
+            igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, average_U_screened_poisson_without_importance, average_U_screened_poisson_without_importance.minCoeff(), average_U_screened_poisson_without_importance.maxCoeff(), CM);
+            viewer.data_list[query_data].set_points(QiV, CM);
+            break;
+
+        }
+        case 7:
+        {
+            // Screened poisson with importance
+            VectorXd total_U_screened_poisson_with_importance = VectorXd::Zero(QiV.rows());
+            for (int k = 0; k < NUM_ITERATIONS; k++) {
+                VectorXd U;
+                walk_on_spheres_screened_poisson(V, F, poisson_boundary_3D, source, QiV, U, sourcePoint, c, true);
+                total_U_screened_poisson_with_importance += U;
+            }
+            VectorXd average_U_screened_poisson_with_importance = total_U_screened_poisson_with_importance / NUM_ITERATIONS;
+            Eigen::MatrixXd CM;
+            igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, average_U_screened_poisson_with_importance, average_U_screened_poisson_with_importance.minCoeff(), average_U_screened_poisson_with_importance.maxCoeff(), CM);
+            viewer.data_list[query_data].set_points(QiV, CM);
+            break;
+
+        }
+        case 8:
+        {
+            // biharmonic 
+            VectorXd total_U_biharmonic = VectorXd::Zero(QiV.rows());
+            for (int k = 0; k < NUM_ITERATIONS; k++) {
+                VectorXd U;
+                walk_on_spheres_biharmonic(V, F, poisson_boundary_3D, source, QiV, U);
+                total_U_biharmonic += U;
+            }
+            VectorXd average_U_biharmonic = total_U_biharmonic / NUM_ITERATIONS;
+            Eigen::MatrixXd CM;
+            igl::colormap(igl::COLOR_MAP_TYPE_MAGMA, average_U_biharmonic, average_U_biharmonic.minCoeff(), average_U_biharmonic.maxCoeff(), CM);
             viewer.data_list[query_data].set_points(QiV, CM);
             break;
 
@@ -303,8 +340,32 @@ int main(int argc, char* argv[])
             break;
         case '6':
             show_Q = 6;
+            break;
+        case '7':
+            show_Q = 7;
+            break;
+        case '8':
+            show_Q = 8;
+            break;
+        case 'k':
+            if (c < 10000) {
+                c *= 10;
+            }
+            break;
+        case 'j':
+            if (c > 1) {
+                c /= 10;
+            }
+            break;
+        //case 'u':
+        //    c *= 10;
+        //    break;
+        //case 'i':
+        //    c *= 10;
+        //    break;
         }
         update();
+        cout << "c: " << c << endl;
         return true;
     };
 
