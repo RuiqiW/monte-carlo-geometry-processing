@@ -97,12 +97,12 @@ void walk_on_spheres_poisson(
                 		Eigen::RowVector3d sample_y(xx, yy, zz);
                 		sample_y = sample_y * k * radius + center;
 
-						//double r2 = (sample_y - sourcePoint).squaredNorm();
+						double r2 = (sample_y - sourcePoint).squaredNorm();
 
 						//fy = c * std::pow(exp(1.0), -r2);
       //          		U(i) += volume * fy * (1-k) / k;
-						double volume = 1.0 / 3.0 * radius * radius; //  4 * pi *radius canceled by G(x, y)
-						U(i) += volume * f(sample_y.transpose()) * (1 - k) / k;
+						double volume = 1.0 / 3.0 * radius * radius; //  4 * pi *radius canceled by g(x, y)
+						u(i) += volume * f(sample_y.transpose()) * (1 - k) / k;
 					}
 				}else{
                 	// r/R
