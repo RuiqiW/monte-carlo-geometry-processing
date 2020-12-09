@@ -92,10 +92,13 @@ void walk_on_spheres_biharmonic(
 
 	for (int i = 0; i < P.rows(); i++) {
 		// since the walk from yi connects to xi+1 -> xk, estimate after iteration
-		double Vy = C.row(i)(0);
-		U(i) *= Vy;
+		//double Vy = C.row(i)(0);
+		//U(i) *= Vy;
+  //      U(i) += (C.row(i)-sourcePoint).squaredNorm();
 		// U(i) *= h(C.row(i)); 
-        U(i) += (C.row(i)-sourcePoint).squaredNorm();
+
+		U(i) *= h(C.row(i));
+		U(i) += B(C.row(i));
 	}
 
 

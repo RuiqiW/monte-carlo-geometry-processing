@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
-project(smoothing)
+project(monte-carlo)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 ### libIGL options: choose between header only and compiled static library
@@ -20,5 +20,5 @@ endif()
 add_library(core ${SRCFILES})
 target_link_libraries(core igl::core igl::opengl igl::opengl_glfw )
 
-add_executable(smoothing "main.cpp")
-target_link_libraries(smoothing core igl::core igl::opengl igl::opengl_glfw )
+add_executable(monte-carlo "main.cpp")
+target_link_libraries(monte-carlo core igl::core igl::opengl igl::opengl_glfw )

@@ -22,8 +22,6 @@
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/get_seconds.h>
 #include <cstdlib>
-#include "2D_example_runner.h"
-#include "poisson_2D_runner.h"
 #include "walk_on_spheres_poisson.h"
 #include "walk_on_spheres_screened_poisson.h"
 #include "walk_on_spheres_biharmonic.h"
@@ -33,7 +31,6 @@ using namespace std;
 using namespace Eigen;
 
 double c = 10000.0;
-//int n 
 
 Vector3d sourcePoint;
 
@@ -43,6 +40,17 @@ double laplacian_boundary_3D(Vector3d boundary_point) {
 double poisson_boundary_3D(Vector3d boundary_point) {
     return 1/ ((boundary_point - sourcePoint).norm());
 }
+
+double B(Vector3d point) {
+    return (point - sourcePoint).squaredNorm();
+}
+
+double h(Vector3d point) {
+    return point(0);
+}
+
+
+
 double source(Vector3d point) {
 
     Eigen::Vector3d sourcePoint(0.5, 0.5, 0.5);
@@ -119,7 +127,6 @@ int main(int argc, char* argv[])
 
     // Generate a list of random query points in the bounding box
     Eigen::MatrixXd Q = Eigen::MatrixXd::Random(1000, 3);
-    //Eigen::MatrixXd Q = Eigen::MatrixXd::Random(10000, 3);
     const Eigen::RowVector3d Vmin = V.colwise().minCoeff();
     const Eigen::RowVector3d Vmax = V.colwise().maxCoeff();
     const Eigen::RowVector3d Vdiag = Vmax - Vmin;
@@ -174,28 +181,6 @@ int main(int argc, char* argv[])
     viewer.data_list[object_data].point_size = 5;
 
     int NUM_ITERATIONS = 64;
-    /*int NUM_ITERATIONS = 64;
-    VectorXd total_U_laplacian = VectorXd::Zero(QiV.rows());
-    VectorXd total_U_poisson_without_importance = VectorXd::Zero(QiV.rows());
-    VectorXd total_U_poisson_with_importance = VectorXd::Zero(QiV.rows());
-
-    for (int k = 0; k < NUM_ITERATIONS; k++) {
-        VectorXd U;
-        walk_on_spheres_3D(V, F, laplacian_boundary_3D, QiV, U);
-        total_U_laplacian += U;
-
-        walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 10000, false);
-        total_U_poisson_without_importance += U;
-
-        walk_on_spheres_poisson(V, F, poisson_boundary_3D, source, QiV, U, Eigen::RowVector3d(0.5, 0.5, 0.5), 10000, true);
-        total_U_poisson_with_importance += U;
-    }
-    VectorXd average_U_laplacian = total_U_laplacian / NUM_ITERATIONS;
-    VectorXd average_U_poisson_without_importance = total_U_poisson_without_importance / NUM_ITERATIONS;
-    VectorXd average_U_poisson_with_importance = total_U_poisson_with_importance / NUM_ITERATIONS;*/
-
-
-
     const auto update = [&]()
     {
         viewer.data_list[query_data].clear();
@@ -357,22 +342,24 @@ int main(int argc, char* argv[])
                 c /= 10;
             }
             break;
-        //case 'u':
-        //    c *= 10;
-        //    break;
-        //case 'i':
-        //    c *= 10;
-        //    break;
         }
         update();
-        cout << "c: " << c << endl;
+        //cout << "c: " << c << endl;
         return true;
     };
 
     std::cout << R"(
-FastWindingNumber
-  1  Toggle point cloud and triangle soup
-  2  Toggle hiding query points, showing query points, showing inside queries
+Monte Carlo PDE computations
+  1  Shows Sample Points of for Point Cloud of mesh
+  2  Shows Query Points
+  3  Solves Laplace Equation for Query Points
+  4  Solves Poisson Equation for Query Points
+  5  Solves Poisson Equation for Query Points with Importance Sampling
+  6  Solves Screened Poisson Equation for Query Points
+  7  Solves Screened Poisson Equation for Query Points with Importance Sampling
+  8  Solves Biharmonic Equation for Query Points
+  k  multiplies c by 10 (max 10000)
+  j  divides c by 10 (min 1)
 )";
 
 
