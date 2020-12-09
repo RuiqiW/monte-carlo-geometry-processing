@@ -102,7 +102,7 @@ void walk_on_spheres_poisson(
 						//fy = c * std::pow(exp(1.0), -r2);
       //          		U(i) += volume * fy * (1-k) / k;
 						double volume = 1.0 / 3.0 * radius * radius; //  4 * pi *radius canceled by g(x, y)
-						u(i) += volume * f(sample_y.transpose()) * (1 - k) / k;
+						U(i) += volume * f(sample_y.transpose()) * (1 - k) / k;
 					}
 				}else{
                 	// r/R
