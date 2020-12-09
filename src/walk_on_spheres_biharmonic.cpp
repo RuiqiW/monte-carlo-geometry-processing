@@ -17,6 +17,7 @@ void walk_on_spheres_biharmonic(
 	// TODO: parameters
 	double eps = 0.01;
     Eigen::RowVector3d sourcePoint(0.37, 64, 0);
+	// Eigen::RowVector3d sourcePoint(0.5, 0.5, 0.5);
 
 	igl::AABB<Eigen::MatrixXd, 3> tree;
 	tree.init(V, F);
@@ -79,20 +80,10 @@ void walk_on_spheres_biharmonic(
                 sample_y = sample_y * k * radius + center;
                 
 
-                // find an estimate for v(y)
-                tree.squared_distance(V, F, sample_y, sqrD_y, I_y, C_y);
-                // double Vy = h(C_y.row(0));
-                double Vy = C_y.row(0)(0);
-                // double Vy = 0;
-
 				double volume = 1.0/3.0 * radius * radius; //  4 * pi *radius canceled by G(x, y)
                 // (R-r)/rR = (1-k)R/kRR = (1-k)/(k * radius)
-                U(i) += Vy * volume * (1-k) / k;
-
+                U(i) += volume * (1-k) / k;
 		} // end looping over points
-		
-		// std::cout << U.maxCoeff() << std::endl;
-
 	} // end while
 
 	// get closest face
@@ -100,9 +91,11 @@ void walk_on_spheres_biharmonic(
 
 
 	for (int i = 0; i < P.rows(); i++) {
-        // U(i) += B(C.row(i));
-        U(i) += 1.0 / (C.row(i) - sourcePoint).norm();
-        // U(i) += C.row(i).norm();
+		// since the walk from yi connects to xi+1 -> xk, estimate after iteration
+		double Vy = C.row(i)(0);
+		U(i) *= Vy;
+		// U(i) *= h(C.row(i)); 
+        U(i) += (C.row(i)-sourcePoint).squaredNorm();
 	}
 
 
